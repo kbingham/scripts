@@ -1,0 +1,51 @@
+path: /home/user/Videos/TV/
+dbPath: /home/user/Dropbox/scripts/
+shows:
+  - name: Futuremag
+    type: YouTube
+    parameters:
+      user: futuremagarte
+      keyword: emission
+  - name: Voxpop
+    type: YouTube
+    parameters:
+      channel: UC4Ku_yoH9xNxU5Nn5ly7XAQ
+  - name: TTC
+    type: RTSPlay
+    parameters:
+      type: tv
+      showid: 14235
+  - name: 26Minutes
+    type: RTSPlay
+    parameters:
+      type: tv
+      showid: 6368115
+  - name: MAP
+    type: RTSPlay
+    parameters:
+      type: tv
+      showid: 385360
+  - name: ABE
+    type: RTSPlay
+    parameters:
+      type: tv
+      showid: 385418
+  - name: LAStory
+    type: RTSPlay
+    parameters:
+      type: tv
+      showid: 8150411
+  - name: Nouvo
+    type: RTSPlay
+    parameters:
+      type: tv
+      showid: 391693
+  - name: Quai-des-orfevres
+    type: RTSPlay
+    parameters:
+      type: radio
+      showid: 7949589
+  - name: HowIBuiltThis
+    type: RSS
+    parameters:
+      url: http://www.npr.org/rss/podcast.php?id=510313
