@@ -30,13 +30,15 @@ class Show(object):
     def __init__(self, name, **kwargs):
         self.name = name
         self.ydl = youtube_dl.YoutubeDL({'outtmpl': u'/tmp/%(id)s', "quiet": True, "progress_hooks": [self._progress]})
+        self.session = requests.Session()
 
     def playlist(self):
         return []
 
-    def _getURL(self, url):
-        html = requests.get(url).text
+    def _getURL(self, url, headers={}):
+        html = self.session.get(url, headers=headers).text
         parsed = BeautifulSoup(html, "lxml")
+        # self.session.headers.update({"Referer": url})
         return (html, parsed)
 
     def _getFilename(self, s):
@@ -140,11 +142,34 @@ class RSS(Show):
         l = []
         for e in parsed.findAll("item"):
             try:            
-                l.append({"url": e.find("enclosure")["url"], "title":e.find("title").text})
+                l.append({"url": e.find("enclosure")["url"], "title": e.find("title").text})
             except:
                 continue
         return l
 
+class TheAtlantic(Show):
+    def __init__(self, name, **kwargs):
+        super().__init__(name)
+        self.base = "https://www.theatlantic.com/"
+        self.url = "{}video/series/{}/".format(self.base, kwargs["series"])
+
+    def playlist(self):
+        l = []
+        page = 1
+        while True:
+            if page == 1:
+                html, parsed = self._getURL(self.url)
+            else:
+                url = self.url + "?page={}".format(page)
+                html, _ = self._getURL(url, {"X-Requested-With": "XMLHttpRequest"})
+                if "html>" in html: # End of pages
+                    break
+                html = json.loads(html)["content"]
+                parsed = BeautifulSoup(html, "lxml")
+            for e in parsed.select(".grid-video"):
+                l.append({"url": self.base + e.find("a")["href"].strip(), "title": e.find("h2").text.strip()})
+            page = page + 1
+        return l
 
 # RTSPlay
 class RTSPlay(Show):

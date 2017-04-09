@@ -49,3 +49,7 @@ shows:
     type: RSS
     parameters:
       url: http://www.npr.org/rss/podcast.php?id=510313
+  - name: IfOurBodiesCouldTalk
+    type: TheAtlantic
+    parameters:
+      series: if-our-bodies-could-talk
