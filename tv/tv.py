@@ -4,7 +4,7 @@
 
 Usage:
   tv download
-  tv archive [--keep] [<filename>]
+  tv archive [--keep] [<filename>...]
   tv list
 
 """
@@ -193,31 +193,33 @@ class RTSPlay(Show):
         ]
 
 
-def archive(filename, keep, db, path):
+def archive(filenames, keep, db, path):
     bprint("Archive")
-    if filename is not None:
-        # Look for file in database
-        v = [(k, v) for k, v in db["urls"].items() if v["filename"] == filename]
-        if len(v) == 0:
-            exit("Not found")
-        k, v = v[0]
-        if v["status"] == "seen":
-            print("Already archived")
-        db["urls"][k]["status"] = "seen"
-    # Clean files
-    for _, u in db["urls"].items():
-        fullpath = path + u["filename"]
-        if u["status"] == "seen" and os.path.isfile(fullpath):
-            if keep:
-                keepPath = path + "keep/"
-                showPath = keepPath + u["filename"].split("/")[0] + "/"
-                mkdir(keepPath)
-                mkdir(showPath)
-                shutil.move(fullpath, keepPath + u["filename"])
-                print("Moved to keep/")
-            else:
-                os.remove(fullpath)
-                print("Removed", u["filename"])
+    for filename in filenames:
+        filename = filename.replace(path, "")
+        if filename is not None:
+            # Look for file in database
+            v = [(k, v) for k, v in db["urls"].items() if v["filename"] == filename]
+            if len(v) == 0:
+                exit("Not found")
+            k, v = v[0]
+            if v["status"] == "seen":
+                print("Already archived")
+            db["urls"][k]["status"] = "seen"
+        # Clean files
+        for _, u in db["urls"].items():
+            fullpath = path + u["filename"]
+            if u["status"] == "seen" and os.path.isfile(fullpath):
+                if keep:
+                    keepPath = path + "keep/"
+                    showPath = keepPath + u["filename"].split("/")[0] + "/"
+                    mkdir(keepPath)
+                    mkdir(showPath)
+                    shutil.move(fullpath, keepPath + u["filename"])
+                    print("Moved to keep/")
+                else:
+                    os.remove(fullpath)
+                    print("Removed", u["filename"])
     print("Done")
 
 
