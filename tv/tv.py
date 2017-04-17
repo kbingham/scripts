@@ -4,7 +4,7 @@
 
 Usage:
   tv download
-  tv archive [--keep] [<filename>...]
+  tv archive [--keep] [--recent] [<filename>...]
   tv list
 
 """
@@ -14,11 +14,12 @@ import json
 import youtube_dl
 import pickle
 import os
-import string
-import shutil
+from string import ascii_letters, digits
+from shutil import move
 from docopt import docopt
 import yaml
 from utils import bprint
+import arrow
 
 
 def mkdir(d):
@@ -43,7 +44,7 @@ class Show(object):
 
     def _getFilename(self, s):
         s = s.replace("/", "-")
-        valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+        valid_chars = "-_.() %s%s" % (ascii_letters, digits)
         return ''.join(c for c in s if c in valid_chars)
 
     def _progress(self, d):
@@ -83,7 +84,7 @@ class Show(object):
             for s in ["", "." + info["ext"], ".mkv"]:  # Bug in youtube-dl
                 filename = "/tmp/" + info["ydl_id"] + s
                 if os.path.isfile(filename):
-                    shutil.move(filename, path + info["filename"])
+                    move(filename, path + info["filename"])
                     break
             print("")
         db["urls"][url] = info
@@ -141,11 +142,12 @@ class RSS(Show):
         html, parsed = self._getURL(self.url)
         l = []
         for e in parsed.findAll("item"):
-            try:            
+            try:
                 l.append({"url": e.find("enclosure")["url"], "title": e.find("title").text})
             except:
                 continue
         return l
+
 
 class TheAtlantic(Show):
     def __init__(self, name, **kwargs):
@@ -162,7 +164,7 @@ class TheAtlantic(Show):
             else:
                 url = self.url + "?page={}".format(page)
                 html, _ = self._getURL(url, {"X-Requested-With": "XMLHttpRequest"})
-                if "html>" in html: # End of pages
+                if "html>" in html:  # End of pages
                     break
                 html = json.loads(html)["content"]
                 parsed = BeautifulSoup(html, "lxml")
@@ -170,6 +172,7 @@ class TheAtlantic(Show):
                 l.append({"url": self.base + e.find("a")["href"].strip(), "title": e.find("h2").text.strip()})
             page = page + 1
         return l
+
 
 # RTSPlay
 class RTSPlay(Show):
@@ -193,8 +196,17 @@ class RTSPlay(Show):
         ]
 
 
-def archive(filenames, keep, db, path):
+def archive(filenames, keep, recent, db, path):
     bprint("Archive")
+    # Add recently accessed files
+    if recent:
+        for d in os.walk(path):
+            for f in d[2]:
+                filename = "/".join([d[0], f])
+                delta = arrow.now() - arrow.get(os.stat(filename).st_atime)
+                delta = delta.total_seconds() / 60
+                if delta < 180:
+                    filenames.append(filename)
     for filename in filenames:
         filename = filename.replace(path, "")
         if filename is not None:
@@ -215,7 +227,7 @@ def archive(filenames, keep, db, path):
                     showPath = keepPath + u["filename"].split("/")[0] + "/"
                     mkdir(keepPath)
                     mkdir(showPath)
-                    shutil.move(fullpath, keepPath + u["filename"])
+                    move(fullpath, keepPath + u["filename"])
                     print("Moved to keep/")
                 else:
                     os.remove(fullpath)
@@ -254,12 +266,15 @@ def main():
                 s.fetch(db, path, 10)
             except Exception as e:
                 print("Error:", e)
+    # List
     elif arguments["list"]:
         for s in shows:
             listShow(s, db)
+    # Archive
     elif arguments["archive"]:
-        archive(arguments["<filename>"], arguments["--keep"], db, path)
+        archive(arguments["<filename>"], arguments["--keep"], arguments["--recent"], db, path)
     pickle.dump(db, open(dbFile, "wb"))
+
 
 if __name__ == '__main__':
     main()

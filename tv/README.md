@@ -6,7 +6,7 @@ Script on top of youtube-dl to manage downloads of podcasts and TV shows.
 
 ```bash
 $ tv download
-$ tv archive [--keep] [<filename>...]
+$ tv archive [--keep] [--recent] [<filename>...]
 $ tv list
 ```
 

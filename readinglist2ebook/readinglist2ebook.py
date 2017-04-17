@@ -70,6 +70,8 @@ def cleanup(unread, path):
 
 def addImages(parsed, path, book, url):
     for img in parsed.findAll("img"):
+        if not img.has_attr("src"):
+            img["src"] = img["data-srcset"]
         uid = sha1(img["src"])
         ext = os.path.splitext(urlparse(img["src"]).path)[1]
         filename = path + uid + ext
